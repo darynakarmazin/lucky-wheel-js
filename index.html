@@ -162,7 +162,7 @@
         const div = document.createElement("div");
         div.className = "sector";
         div.style.backgroundColor = sector.color;
-        div.style.transform = `rotate(${angle}deg) translate(50%)`;
+        div.style.transform = `rotate(${angle}deg)`;
         div.textContent = `${sector.type}: ${sector.value}`;
         wheel.appendChild(div);
       });
