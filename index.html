@@ -3,209 +3,133 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Колесо Фортуни</title>
+    <title>Lucky Wheel</title>
     <style>
+      * {
+        box-sizing: border-box;
+      }
       body {
+        margin: 0;
+        height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        height: 100vh;
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background-color: #f0f0f0;
+        background: #f0f0f0;
+        font-family: sans-serif;
       }
-      .wheel-container {
+      .container {
         position: relative;
-        width: 300px;
-        height: 300px;
+        width: 400px;
+        height: 400px;
       }
       .wheel {
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        position: relative;
-        overflow: hidden;
-        transition: transform 4s ease-out;
+        border: 10px solid #222;
+        transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
       }
-      .sector {
+      .pointer {
         position: absolute;
-        width: 50%;
-        height: 50%;
         top: 50%;
-        left: 50%;
-        transform-origin: 0 0;
-        clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        font-size: 14px;
-        color: white;
-        text-align: center;
-        padding: 10px;
-      }
-      .arrow {
-        position: absolute;
-        top: -20px;
-        left: 50%;
-        transform: translateX(-50%);
+        right: -10%;
+        transform: translateX(-50%) rotate(-90deg);
         width: 0;
         height: 0;
-        border-left: 10px solid transparent;
-        border-right: 10px solid transparent;
-        border-top: 20px solid red;
-        z-index: 10;
+        border-left: 20px solid transparent;
+        border-right: 20px solid transparent;
+        border-bottom: 30px solid red;
+        z-index: 9999;
       }
-      button {
-        margin-top: 20px;
-        padding: 10px 20px;
+      .btn-spin {
+        margin-top: 30px;
+        padding: 10px 25px;
         font-size: 18px;
-        cursor: pointer;
-        background-color: #28a745;
-        color: white;
+        background: #333;
+        color: #fff;
         border: none;
-        border-radius: 5px;
-      }
-      button:disabled {
-        background-color: #ccc;
-        cursor: not-allowed;
-      }
-      #result {
-        margin-top: 20px;
-        font-size: 18px;
-        text-align: center;
-      }
-      #promo-container {
-        margin-top: 20px;
-        display: none;
-        text-align: center;
-      }
-      #promo-code {
-        padding: 10px;
-        font-size: 16px;
-        background-color: #fff;
-        border: 1px solid #ccc;
-        margin-right: 10px;
-      }
-      #copy-btn {
-        padding: 10px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
+        border-radius: 6px;
         cursor: pointer;
+      }
+      .result {
+        margin-top: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
       }
     </style>
   </head>
   <body>
-    <div class="wheel-container">
-      <div class="arrow"></div>
-      <div class="wheel" id="wheel"></div>
+    <div class="container">
+      <div class="pointer"></div>
+      <canvas id="wheel" width="400" height="400"></canvas>
     </div>
-    <button id="spin-btn">Крутити!</button>
-    <div id="result"></div>
-    <div id="promo-container">
-      <input type="text" id="promo-code" readonly />
-      <button id="copy-btn">Копіювати</button>
-    </div>
+    <button class="btn-spin" onclick="spin()">Крутити колесо</button>
+    <div class="result" id="result"></div>
 
     <script>
+      const canvas = document.getElementById("wheel");
+      const ctx = canvas.getContext("2d");
+      const resultEl = document.getElementById("result");
+
       const sectors = [
-        {
-          type: "Подарунок",
-          value: "Безкоштовна доставка",
-          color: "#ff4d4d",
-          promo: "FREESHIP",
-        },
-        {
-          type: "Знижка",
-          value: "10% на замовлення",
-          color: "#ff9933",
-          promo: "SAVE10",
-        },
-        {
-          type: "Акція",
-          value: "Купи 2, отримай 1",
-          color: "#33cc33",
-          promo: "B2G1",
-        },
-        {
-          type: "Подарунок",
-          value: "Подарункова карта 50 грн",
-          color: "#3399ff",
-          promo: "GIFT50",
-        },
-        {
-          type: "Знижка",
-          value: "20% на все",
-          color: "#cc33cc",
-          promo: "SAVE20",
-        },
-        {
-          type: "Акція",
-          value: "Подвійні бали",
-          color: "#ff66b3",
-          promo: "DOUBLEPTS",
-        },
+        { label: "10% знижка", color: "#ffadad" },
+        { label: "20% знижка", color: "#ffd6a5" },
+        { label: "30% знижка", color: "#fdffb6" },
+        { label: "40% знижка", color: "#caffbf" },
+        { label: "50% знижка", color: "#9bf6ff" },
+        { label: "Спробуй ще!", color: "#a0c4ff" },
+        { label: "Безкоштовна доставка", color: "#bdb2ff" },
+        { label: "Промо: SAVE5", color: "#ffc6ff" },
       ];
 
-      const wheel = document.getElementById("wheel");
-      const spinBtn = document.getElementById("spin-btn");
-      const result = document.getElementById("result");
-      const promoContainer = document.getElementById("promo-container");
-      const promoCode = document.getElementById("promo-code");
-      const copyBtn = document.getElementById("copy-btn");
+      const numSectors = sectors.length;
+      const arc = (2 * Math.PI) / numSectors;
+      let angle = 0;
+      let currentRotation = 0;
 
-      // Створюємо сектори
-      sectors.forEach((sector, i) => {
-        const angle = (i * 360) / sectors.length;
-        const div = document.createElement("div");
-        div.className = "sector";
-        div.style.backgroundColor = sector.color;
-        div.style.transform = `rotate(${angle}deg)`;
-        div.textContent = `${sector.type}: ${sector.value}`;
-        wheel.appendChild(div);
-      });
+      function drawWheel() {
+        sectors.forEach((sector, i) => {
+          const startAngle = arc * i;
+          const endAngle = startAngle + arc;
 
-      let isSpinning = false;
+          ctx.beginPath();
+          ctx.fillStyle = sector.color;
+          ctx.moveTo(200, 200);
+          ctx.arc(200, 200, 200, startAngle, endAngle);
+          ctx.fill();
 
-      spinBtn.addEventListener("click", () => {
-        if (isSpinning) return;
-        isSpinning = true;
-        spinBtn.disabled = true;
-        result.textContent = "";
-        promoContainer.style.display = "none";
+          ctx.save();
+          ctx.translate(200, 200);
+          ctx.rotate(startAngle + arc / 2);
+          ctx.textAlign = "right";
+          ctx.fillStyle = "#000";
+          ctx.font = "14px sans-serif";
+          ctx.fillText(sector.label, 180, 10);
+          ctx.restore();
+        });
+      }
 
-        // Випадкове число обертів
-        const randomSpins = Math.floor(Math.random() * 3) + 3;
-        const randomAngle = Math.random() * 360;
-        const totalRotation = randomSpins * 360 + randomAngle;
+      drawWheel();
 
-        wheel.style.transform = `rotate(${totalRotation}deg)`;
+      function spin() {
+        const randomIndex = Math.floor(Math.random() * numSectors);
+        const rotateTo =
+          360 * 5 + (360 / numSectors) * randomIndex + 360 / numSectors / 2;
+        const finalRotation = currentRotation + rotateTo;
+
+        canvas.style.transition = "transform 4s cubic-bezier(0.33, 1, 0.68, 1)";
+        canvas.style.transform = `rotate(${finalRotation}deg)`;
+        currentRotation = finalRotation;
 
         setTimeout(() => {
-          const normalizedAngle = totalRotation % 360;
-          const sectorIndex = Math.floor(
-            ((360 - normalizedAngle) % 360) / (360 / sectors.length)
-          );
-          const selectedSector = sectors[sectorIndex];
-
-          result.textContent = `Ви виграли ${selectedSector.type.toLowerCase()}: ${
-            selectedSector.value
-          }!`;
-          promoCode.value = selectedSector.promo;
-          promoContainer.style.display = "block";
-
-          isSpinning = false;
-          spinBtn.disabled = false;
+          const normalizedAngle = (360 - (finalRotation % 360)) % 360;
+          const sectorIndex = Math.floor((normalizedAngle / 360) * numSectors);
+          const prize = sectors[sectorIndex].label;
+          resultEl.textContent = `Ви виграли: ${prize}`;
         }, 4000);
-      });
-
-      copyBtn.addEventListener("click", () => {
-        promoCode.select();
-        document.execCommand("copy");
-        alert("Промокод скопійовано!");
-      });
+      }
     </script>
   </body>
 </html>
