@@ -58,6 +58,26 @@
         font-weight: bold;
         color: #333;
       }
+      #promo-container {
+        margin-top: 10px;
+        display: none;
+        text-align: center;
+      }
+      #promo-code {
+        padding: 10px;
+        font-size: 16px;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        margin-right: 10px;
+      }
+      #copy-btn {
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -67,21 +87,32 @@
     </div>
     <button class="btn-spin" onclick="spin()">Крутити колесо</button>
     <div class="result" id="result"></div>
+    <div id="promo-container">
+      <input type="text" id="promo-code" readonly />
+      <button id="copy-btn">Копіювати</button>
+    </div>
 
     <script>
       const canvas = document.getElementById("wheel");
       const ctx = canvas.getContext("2d");
       const resultEl = document.getElementById("result");
+      const promoContainer = document.getElementById("promo-container");
+      const promoCode = document.getElementById("promo-code");
+      const copyBtn = document.getElementById("copy-btn");
 
       const sectors = [
-        { label: "10% знижка", color: "#ffadad" },
-        { label: "20% знижка", color: "#ffd6a5" },
-        { label: "30% знижка", color: "#fdffb6" },
-        { label: "40% знижка", color: "#caffbf" },
-        { label: "50% знижка", color: "#9bf6ff" },
-        { label: "Спробуй ще!", color: "#a0c4ff" },
-        { label: "Безкоштовна доставка", color: "#bdb2ff" },
-        { label: "Промо: SAVE5", color: "#ffc6ff" },
+        { label: "10% знижка", color: "#ffadad", promo: "SAVE10" },
+        { label: "Подвійні бали", color: "#ffd6a5", promo: "SAVE20" },
+        { label: "30% знижка", color: "#fdffb6", promo: "SAVE30" },
+        { label: "Купи 2, отримай 1", color: "#caffbf", promo: "SAVE40" },
+        {
+          label: "Подарункова карта 50 грн",
+          color: "#9bf6ff",
+          promo: "SAVE50",
+        },
+        { label: "Спробуй ще!", color: "#a0c4ff", promo: "TRYAGAIN" },
+        { label: "Безкоштовна доставка", color: "#bdb2ff", promo: "FREESHIP" },
+        { label: "Промо: SAVE5", color: "#ffc6ff", promo: "SAVE5" },
       ];
 
       const numSectors = sectors.length;
@@ -125,11 +156,21 @@
 
         setTimeout(() => {
           const normalizedAngle = (360 - (finalRotation % 360)) % 360;
-          const sectorIndex = Math.floor((normalizedAngle / 360) * numSectors);
+          const sectorIndex =
+            Math.floor((normalizedAngle / 360) * numSectors) % numSectors;
           const prize = sectors[sectorIndex].label;
+          const promo = sectors[sectorIndex].promo;
           resultEl.textContent = `Ви виграли: ${prize}`;
+          promoCode.value = promo;
+          promoContainer.style.display = "block";
         }, 4000);
       }
+
+      copyBtn.addEventListener("click", () => {
+        promoCode.select();
+        document.execCommand("copy");
+        alert("Промокод скопійовано!");
+      });
     </script>
   </body>
 </html>
